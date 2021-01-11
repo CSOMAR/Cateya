@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.LinearLayout
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -89,15 +90,29 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.deleteButton -> {
-                PayeesAdapter.selectedPayees.forEach { payee: Payee ->
-                    database.child(PAYEES).child(payee.id).removeValue()
-                }
+                showDeleteDialog(onDeleteAction = {
+                    PayeesAdapter.selectedPayees.forEach { payee: Payee ->
+                        database.child(PAYEES).child(payee.id).removeValue()
+                    }
 
-                clearSelection()
+                    clearSelection()
+                })
             }
         }
 
         return true
+    }
+
+    private fun showDeleteDialog(onDeleteAction: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.delete_confirmation_message))
+            .setPositiveButton(getString(R.string.yes)) { dialogInterface, _ ->
+                dialogInterface.dismiss()
+                onDeleteAction.invoke()
+            }
+            .setNegativeButton(getString(R.string.no)) { dialogInterface, _ -> dialogInterface.dismiss() }
+            .create()
+            .show()
     }
 
     private fun setupMenuButtonsVisibility() {
@@ -143,7 +158,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         payeesAdapter.setOnDeleteClickAction { payee ->
-            database.child(PAYEES).child(payee.id).removeValue()
+            showDeleteDialog(onDeleteAction = {
+                database.child(PAYEES).child(payee.id).removeValue()
+            })
         }
     }
 
